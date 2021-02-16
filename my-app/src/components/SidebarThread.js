@@ -1,15 +1,38 @@
-import React from 'react'
 import {Avatar} from '@material-ui/core'
 import './SidebarThread.scss';
+import React, { useEffect, useState } from 'react'
+import { useDispatch } from 'react-redux'
+import db from '../firebase'
+import { setThread } from '../features/threadSlice'
 
-const SidebarThread = () => {
+const SidebarThread = ({ id, threadName}) => {
+    const dispatch = useDispatch();
+    const [threadInfo, setThreadInfo] = useState([])
+
+    useEffect(() => {
+        db.collection('threads')
+            .doc(id)
+            .collection('messages')
+            .orderBy("timestamp", "desc")
+            .onSnapshot((snapshot) => 
+                setThreadInfo(snapshot.docs.map((doc) => doc.data()))
+            )
+    },[id])
     return (
-        <div className="sidebarThread">
-            <Avatar/>
+        <div 
+        className = "sidebarThread"
+        onClick = {() => 
+            dispatch(setThread({
+                threadId: id,
+                threadName: threadName
+            }))
+        }    
+    >
+            <Avatar src = {threadInfo[0]?.photo}/>
             <div className="sidebarThread_details">
-            <h3>Thread Name</h3>
-            <p>This is the info </p>
-            <small className="sidebarThread_timestamp">timestamp</small>
+            <h3>{threadName}</h3>
+            <p>{threadInfo[0]?.message}</p>
+            <small className="sidebarThread_timestamp">{new Date(threadInfo[0]?.timestamp?.toDate()).toLocaleString()}</small>
         </div>
         </div>
     )
